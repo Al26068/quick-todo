@@ -903,8 +903,8 @@
   }
 
   async function enablePush() {
+    if (isIOS && !standalone()) throw new Error("共有ボタン →「ホーム画面に追加」で追加し、そのアイコンから開いてください");
     if (!pushSupported()) throw new Error("このブラウザは通知に対応していません");
-    if (isIOS && !standalone()) throw new Error("ホーム画面に追加したアプリから開いてください");
     if (!sync.key) throw new Error("通知を使うには、先に「同期」をオンにしてください");
     const perm = await Notification.requestPermission();
     if (perm !== "granted") { await refreshPush(); throw new Error("通知が許可されていません。端末の設定で許可してください"); }
@@ -1074,8 +1074,8 @@
     const s3 = el("h4", "sec-title", "通知"); s3.dataset.sec = "notify"; sheet.append(s3);
     const b3 = el("div", "block"); b3.style.marginTop = "8px";
     const st3 = el("div", "status");
-    if (!pushSupported()) st3.append(statusRow("通知", "このブラウザは非対応", "ng")[0]);
-    else if (isIOS && !standalone()) st3.append(statusRow("通知", "ホーム画面のアプリから開いてください", "warn")[0]);
+    if (isIOS && !standalone()) st3.append(statusRow("通知", "ホーム画面に追加したアプリで使えます", "warn")[0]);
+    else if (!pushSupported()) st3.append(statusRow("通知", "このブラウザは非対応", "ng")[0]);
     else st3.append(statusRow("通知の許可", { granted: "許可済み", denied: "拒否されています", default: "未設定" }[push.perm] || push.perm, push.perm === "granted" ? "ok" : push.perm === "denied" ? "ng" : "warn")[0]);
     st3.append(statusRow("同期", sync.key && api ? "オン" : "オフ", sync.key && api ? "ok" : "warn")[0]);
     st3.append(statusRow("アプリを閉じているとき", push.active ? "通知が届きます" : "通知されません", push.active ? "ok" : "warn")[0]);
