@@ -757,7 +757,8 @@
   const b64uToU8 = (s) => { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return Uint8Array.from(atob(s), (c) => c.charCodeAt(0)); };
   const makeCode = () => "qt1." + u8ToB64u(new TextEncoder().encode(JSON.stringify({ a: apiBase(), k: sync.key })));
   function parseCode(s) {
-    s = String(s || "").trim();
+    s = String(s || "").replace(/\s+/g, "");   // 改行や空白が混ざっていても読める
+    s = s.replace(/^.*#join=/, "");               // 共有リンクをそのまま貼ってもよい
     if (/^qt1\./i.test(s)) {
       try { const j = JSON.parse(new TextDecoder().decode(b64uToU8(s.slice(4)))); const k = normKey(j.k); if (KEY_RE.test(k)) return { key: k, api: typeof j.a === "string" ? j.a.trim().replace(/\/+$/, "") : "" }; } catch (_) {}
       return null;
@@ -1052,8 +1053,15 @@
       });
       const now = el("button", "btn", "今すぐ同期"); now.type = "button";
       now.addEventListener("click", run(now, async () => { if (!(await runSync()) && sync.error) throw new Error(sync.error); return "同期しました"; }));
-      rowC.append(copy, now); b2.append(rowC);
-      b2.append(el("p", "hint", "このコードを知っている人は、あなたの付箋を見たり書き換えたりできます。他の人には渡さないでください。別の端末の「同期に参加する」欄に貼り付けると、同じ付箋が使えます。"));
+      const link = el("button", "btn", "リンクをコピー"); link.type = "button";
+      link.addEventListener("click", async () => {
+        const u = location.origin + location.pathname + "#join=" + makeCode();
+        try { await navigator.clipboard.writeText(u); toast("リンクをコピーしました。他の端末で開いてください"); } catch (_) { toast("コピーできませんでした。コードをコピーしてください"); }
+      });
+      rowC.append(copy, link, now); b2.append(rowC);
+      const sl = el("p", "label", "短いコード（サーバーのURLを先に入れた端末用）"); sl.style.marginTop = "14px"; b2.append(sl);
+      b2.append(el("div", "code", sync.key.match(/.{1,5}/g).join("-")));
+      b2.append(el("p", "hint", "このコードを知っている人は、あなたの付箋を見たり書き換えたりできます。他の人には渡さないでください。別の端末の「同期に参加する」欄に貼り付けるか、リンクをその端末で開くと、同じ付箋が使えます。"));
       const rowD = el("div", "row"); rowD.style.marginTop = "14px";
       const stop = el("button", "btn", "この端末の同期をやめる"); stop.type = "button";
       stop.addEventListener("click", run(stop, async () => { await stopSync(); return "この端末の同期をやめました。付箋はこの端末に残っています"; }));
@@ -1113,6 +1121,11 @@
   refreshPush();
   if (sync.key) scheduleSync(200);
   if (location.hash.startsWith("#note=")) openNote(decodeURIComponent(location.hash.slice(6)));
+  if (location.hash.startsWith("#join=")) {
+    const c = location.hash.slice(6);
+    history.replaceState(null, "", location.pathname + location.search);
+    if (!sync.key) { openSettings("sync"); const f = $("f-code"); if (f) f.value = c; toast("「参加する」を押してください", 4000); }
+  }
   if (loaded.migrated) toast("ver " + VERSION + ": 以前のデータを未着手に移しました", 4500);
 })();
 </script>
