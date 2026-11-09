@@ -1,8 +1,10 @@
-// オフラインでも開けるようにアプリ本体をキャッシュする
-const CACHE = "quick-todo-v1";
+// やること ver 2.0 — オフライン対応と Web Push 通知
+const VERSION = "2.0";
+const CACHE = "quick-todo-v" + VERSION;
 const ASSETS = [
   "./",
   "index.html",
+  "config.js",
   "manifest.webmanifest",
   "bg.jpg",
   "icons/icon-192.png",
@@ -22,16 +24,52 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// ネットワーク優先、失敗したらキャッシュ（更新が反映されやすい）
+// ネットワーク優先、失敗したらキャッシュ。更新はすぐ反映される。
 self.addEventListener("fetch", (e) => {
-  if (e.request.method !== "GET") return;
+  const req = e.request;
+  if (req.method !== "GET") return;
+  if (new URL(req.url).origin !== self.location.origin) return;
   e.respondWith(
-    fetch(e.request)
+    fetch(req, { cache: "no-cache" })
       .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy));
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+        }
         return res;
       })
-      .catch(() => caches.match(e.request).then((r) => r || caches.match("index.html")))
+      .catch(() => caches.match(req).then((r) => r || caches.match("index.html")))
+  );
+});
+
+// サーバーからの通知を表示する（iOSは受信のたびに必ず表示する必要がある）
+self.addEventListener("push", (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (_) { d = { body: e.data ? e.data.text() : "" }; }
+  const title = d.title || "やること";
+  e.waitUntil(
+    self.registration.showNotification(title, {
+      body: d.body || "アラームの時間です",
+      tag: d.tag || "qt-alarm",
+      data: { id: d.id || null },
+      icon: "icons/icon-192.png",
+    })
+  );
+});
+
+// 通知をタップしたら該当の付箋を開く
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const id = e.notification.data && e.notification.data.id;
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        if ("focus" in c) {
+          c.postMessage({ type: "open", id });
+          return c.focus();
+        }
+      }
+      return self.clients.openWindow(id ? "./#note=" + encodeURIComponent(id) : "./");
+    })
   );
 });

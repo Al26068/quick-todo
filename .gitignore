@@ -1,0 +1,5 @@
+node_modules/
+server/vapid-keys.json
+server/.dev.vars
+server/.wrangler/
+.DS_Store

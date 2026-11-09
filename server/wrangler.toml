@@ -1,0 +1,18 @@
+name = "quick-todo-push"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+# アプリを公開しているサイトのオリジン（複数ならカンマ区切り）
+ALLOWED_ORIGIN = "https://al26068.github.io"
+# Push サービスに伝える連絡先（https のURLか mailto:）
+VAPID_SUBJECT = "https://al26068.github.io/quick-todo/"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "quick-todo"
+# `npx wrangler d1 create quick-todo` で表示される database_id に置き換える
+database_id = "REPLACE_WITH_DATABASE_ID"
+
+[triggers]
+crons = ["* * * * *"]

@@ -1,0 +1,17 @@
+{
+  "name": "quick-todo-push",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "やること ver 2.0 の通知サーバー（Cloudflare Workers + D1）",
+  "scripts": {
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy",
+    "keys": "node scripts/gen-vapid.mjs",
+    "test": "node test/run.mjs"
+  },
+  "devDependencies": {
+    "http_ece": "^1.2.1",
+    "wrangler": "^4.0.0"
+  }
+}
