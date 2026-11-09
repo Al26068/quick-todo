@@ -432,7 +432,10 @@
     return n;
   }
 
+  let dragging = false, renderPending = false;
   function render() {
+    if (dragging) { renderPending = true; return; }
+    renderPending = false;
     for (const s of STAGES) {
       const r = refs[s.key];
       const list = live().filter((i) => i.stage === s.key).sort((a, b) => b.ts - a.ts);
@@ -499,7 +502,10 @@
   let dragJustEnded = false;
   function startDrag(ev, it, card, grip) {
     if (ev.pointerType === "mouse" && ev.button !== 0 && ev.type === "pointerdown") return;
+    if (dragging) return;
     ev.preventDefault();
+    dragging = true;                                // ドラッグ中は画面を描き直さない（付箋が差し替わって「離した」が届かなくなるのを防ぐ）
+    const pid = ev.pointerId;
     const r = card.getBoundingClientRect();
     const ghost = card.cloneNode(true);
     ghost.classList.add("ghost"); ghost.style.width = r.width + "px"; ghost.style.setProperty("--rot", "0deg");
@@ -508,33 +514,51 @@
     place(ev.clientX, ev.clientY);
     document.body.append(ghost);
     card.classList.add("lifting"); document.body.classList.add("dragging");
-    try { grip.setPointerCapture(ev.pointerId); } catch (_) {}
-    let target = null;
+    try { grip.setPointerCapture(pid); } catch (_) {}
+    let target = null, finished = false;
     const mark = (key) => {
       target = key;
       document.querySelectorAll(".drop-hot").forEach((n) => n.classList.remove("drop-hot"));
       if (key && key !== it.stage) document.querySelectorAll(`[data-drop="${key}"]`).forEach((n) => n.classList.add("drop-hot"));
     };
     const onMove = (e) => {
+      if (e.pointerId !== pid) return;
+      // ウィンドウの外でボタンを離していた場合は、そこで終わりにする
+      if (e.pointerType === "mouse" && e.buttons === 0) return end(false);
       place(e.clientX, e.clientY);
       const t = document.elementFromPoint(e.clientX, e.clientY);
       const d = t && t.closest("[data-drop]");
       mark(d ? d.dataset.drop : null);
     };
+    const onUp = (e) => { if (e.pointerId === pid) end(true); };
+    const onCancel = (e) => { if (e.pointerId === pid) end(false); };
+    const onKey = (e) => { if (e.key === "Escape") end(false); };
+    const onHide = () => { if (document.hidden) end(false); };
     const end = (commit) => {
-      grip.removeEventListener("pointermove", onMove);
-      grip.removeEventListener("pointerup", onUp);
-      grip.removeEventListener("pointercancel", onCancel);
+      if (finished) return;
+      finished = true;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("visibilitychange", onHide);
+      try { grip.releasePointerCapture(pid); } catch (_) {}
       ghost.remove(); card.classList.remove("lifting"); document.body.classList.remove("dragging");
+      document.querySelectorAll(".ghost").forEach((n) => n.remove());
       dragJustEnded = true; setTimeout(() => { dragJustEnded = false; }, 60);   // ドロップ直後のクリックでシートが開かないように
       const to = target; mark(null);
-      if (commit && to && to !== it.stage) move(it.id, to);
+      dragging = false;
+      if (commit && to && to !== it.stage) move(it.id, to);   // move が描き直す
+      else if (renderPending) render();
     };
-    const onUp = () => end(true);
-    const onCancel = () => end(false);
-    grip.addEventListener("pointermove", onMove);
-    grip.addEventListener("pointerup", onUp);
-    grip.addEventListener("pointercancel", onCancel);
+    const onBlur = () => end(false);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("visibilitychange", onHide);
   }
 
   /* ---------- トースト ---------- */
