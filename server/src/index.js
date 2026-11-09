@@ -138,11 +138,12 @@ async function dataSync(req, env) {
   let since = Number.isFinite(body.since) && body.since > 0 ? Math.floor(body.since) : 0;
 
   const user = await env.DB.prepare(`SELECT seq FROM users WHERE uid = ?1`).bind(uid).first();
-  if (!user && !incoming.length) return reply(req, env, 200, { exists: false, items: [], cursor: 0, more: false, now });
+  const creating = !user && body.create === true;   // 付箋が0枚の端末が同期を始めるときも、コードを登録する
+  if (!user && !incoming.length && !creating) return reply(req, env, 200, { exists: false, items: [], cursor: 0, more: false, now });
   if (user && since > user.seq * 1000 + 999) since = 0;   // 作り直されたデータに古い目印が残っていたとき
 
   const stmts = [];
-  if (incoming.length) {
+  if (incoming.length || creating) {
     const c = await env.DB.prepare(`SELECT COUNT(*) AS n FROM items WHERE uid = ?1`).bind(uid).first();
     if (c.n >= MAX_ITEMS_PER_USER) throw fail(413, "付箋が多すぎます（上限 " + MAX_ITEMS_PER_USER + " 枚）");
     stmts.push(env.DB.prepare(`INSERT INTO users (uid, created_at, seq) VALUES (?1, ?2, 0) ON CONFLICT(uid) DO NOTHING`).bind(uid, now));

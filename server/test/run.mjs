@@ -164,6 +164,16 @@ await test("まだ誰も使っていないコードは exists:false（入力ミ�
   assert.equal((await sync(env, key, [], 0)).exists, true);
 });
 
+await test("付箋が0枚の端末が create:true で始めても、コードが登録される", async () => {
+  const env = mkEnv(), key = newKey();
+  const res = await handle(new Request("https://x.test/api/data/sync", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + key }, body: JSON.stringify({ items: [], since: 0, create: true }) }), env);
+  const j = await res.json();
+  assert.equal(j.exists, true);
+  assert.equal((await sync(env, key, [], 0)).exists, true, "2台目が参加できる");
+  const other = await sync(env, newKey(), [], 0);
+  assert.equal(other.exists, false, "別のコードには影響しない");
+});
+
 await test("差分だけが返る（since 以降の変更のみ）", async () => {
   const env = mkEnv(), key = newKey();
   await sync(env, key, [item("a"), item("b")]);

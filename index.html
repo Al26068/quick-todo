@@ -798,7 +798,7 @@
     return changed;
   }
 
-  let syncBusy = false, syncAgain = false, syncTimer = 0;
+  let syncBusy = false, syncAgain = false, syncTimer = 0, createNext = false;
   function scheduleSync(ms) {
     if (!sync.key) return;
     clearTimeout(syncTimer);
@@ -821,7 +821,8 @@
       for (let round = 0; round < 30; round++) {
         const dirty = items.filter(isDirty).slice(0, 40);
         const sent = new Map(dirty.map((i) => [i.id, i.u]));
-        const res = await call("/api/data/sync", { items: dirty.map(pub), since: sync.cursor });
+        const create = createNext; createNext = false;
+        const res = await call("/api/data/sync", { items: dirty.map(pub), since: sync.cursor, ...(create ? { create: true } : {}) });
         for (const i of items) if (sent.has(i.id) && i.u === sent.get(i.id)) i.sy = i.u;   // 送っている間に編集されていなければ「送信済み」
         const changed = mergeRemote(res.items || []);
         sync.cursor = res.cursor || 0;
@@ -847,7 +848,7 @@
     try { const h = await fetch(api + "/api/health"); if (!h.ok) throw 0; } catch (_) { throw new Error("サーバーに接続できません。URLを確認してください"); }
     sync.key = genKey(); sync.cursor = 0; sync.last = 0;
     items.forEach((i) => { i.sy = 0; });
-    saveSync(); save();
+    saveSync(); save(); createNext = true;
     if (!(await runSync())) { const m = sync.error; sync.key = null; saveSync(); setSyncStatus("off"); throw new Error(m || "同期を始められませんでした"); }
   }
 
