@@ -107,7 +107,10 @@
   .note[data-stage="done"] .check { background: rgb(var(--done)); border-color: rgb(var(--done)); box-shadow: 0 0 14px rgba(var(--done), .7); }
   .note[data-stage="done"] .check svg { opacity: 1; transform: none; }
 
-  .body { min-width: 0; padding: 2px 0 6px; cursor: pointer; outline-offset: 4px; }
+  .note { cursor: grab; -webkit-user-select: none; user-select: none; }
+  .body { min-width: 0; padding: 2px 0 6px; outline-offset: 4px; }
+  .note button { cursor: pointer; }
+  .note .grip { cursor: grab; }
   .title { font-size: 17px; font-weight: 650; line-height: 1.38; word-break: break-word; }
   .note[data-stage="done"] .title { color: var(--muted); text-decoration: line-through; }
   .memo { margin-top: 4px; font-size: 14px; line-height: 1.45; color: rgba(255,255,255,.78); white-space: pre-line; word-break: break-word;
@@ -360,11 +363,25 @@
       const c = el("span", "chip"); c.innerHTML = ICON.memo; c.append(document.createTextNode("ほかの段階のメモ")); chips.append(c);
     }
     if (chips.childNodes.length) body.append(chips);
-    body.addEventListener("click", () => openNote(it.id));
+    body.addEventListener("click", () => { if (!dragJustEnded) openNote(it.id); });
     body.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openNote(it.id); } });
 
     const grip = el("button", "grip"); grip.type = "button"; grip.innerHTML = ICON.grip; grip.setAttribute("aria-label", "ドラッグして移動");
     grip.addEventListener("pointerdown", (e) => startDrag(e, it, n, grip));
+    // マウスなら、付箋のどこを掴んでもドラッグできる（タッチは画面のスクロールと区別するため ⠿ だけ）
+    n.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "mouse" || e.button !== 0 || e.target.closest("button, input, textarea")) return;
+      const sx = e.clientX, sy = e.clientY;
+      const stop = () => { window.removeEventListener("pointermove", probe); window.removeEventListener("pointerup", stop); window.removeEventListener("pointercancel", stop); };
+      const probe = (m) => {
+        if (Math.hypot(m.clientX - sx, m.clientY - sy) < 6) return;
+        stop();
+        startDrag(m, it, n, n);
+      };
+      window.addEventListener("pointermove", probe);
+      window.addEventListener("pointerup", stop);
+      window.addEventListener("pointercancel", stop);
+    });
 
     const moves = el("div", "moves");
     STAGES.filter((s) => s.key !== it.stage).forEach((s) => {
@@ -439,8 +456,9 @@
   input.addEventListener("input", () => { add.disabled = !input.value.trim(); });
 
   /* ---------- ドラッグで段階を移す ---------- */
+  let dragJustEnded = false;
   function startDrag(ev, it, card, grip) {
-    if (ev.pointerType === "mouse" && ev.button !== 0) return;
+    if (ev.pointerType === "mouse" && ev.button !== 0 && ev.type === "pointerdown") return;
     ev.preventDefault();
     const r = card.getBoundingClientRect();
     const ghost = card.cloneNode(true);
@@ -468,6 +486,7 @@
       grip.removeEventListener("pointerup", onUp);
       grip.removeEventListener("pointercancel", onCancel);
       ghost.remove(); card.classList.remove("lifting"); document.body.classList.remove("dragging");
+      dragJustEnded = true; setTimeout(() => { dragJustEnded = false; }, 60);   // ドロップ直後のクリックでシートが開かないように
       const to = target; mark(null);
       if (commit && to && to !== it.stage) move(it.id, to);
     };
