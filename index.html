@@ -51,11 +51,15 @@
   .brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
   h1 { margin: 0; font-size: 30px; font-weight: 800; letter-spacing: .02em; text-shadow: 0 2px 14px rgba(0,0,0,.5); }
   .ver { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .hbtns { display: flex; gap: 10px; }
   .icon-btn { position: relative; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; padding: 0; }
   .icon-btn svg { width: 22px; height: 22px; }
-  .icon-btn .badge { position: absolute; top: 9px; right: 10px; width: 9px; height: 9px; border-radius: 50%;
-    background: var(--accent); box-shadow: 0 0 10px rgba(94,231,255,.9); display: none; }
-  .icon-btn.on .badge { display: block; }
+  .icon-btn .badge { position: absolute; top: 8px; right: 9px; width: 9px; height: 9px; border-radius: 50%; display: none; }
+  #bell.on .badge { display: block; background: var(--accent); box-shadow: 0 0 10px rgba(94,231,255,.9); }
+  #syncBtn[data-s="ok"] .badge { display: block; background: #7dffb0; box-shadow: 0 0 10px rgba(125,255,176,.9); }
+  #syncBtn[data-s="busy"] .badge { display: block; background: #ffd98a; box-shadow: 0 0 10px rgba(255,217,138,.9); animation: blink 1s ease-in-out infinite; }
+  #syncBtn[data-s="error"] .badge { display: block; background: #ff7b7b; box-shadow: 0 0 10px rgba(255,123,123,.9); }
+  @keyframes blink { 50% { opacity: .25; } }
 
   form#form { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 20px; border-radius: 999px; }
   input[type=text], input[type=url], input[type=datetime-local], textarea { font-family: inherit; color: #fff; color-scheme: dark; }
@@ -122,7 +126,7 @@
   .chip.late { background: rgba(255,92,92,.3); border-color: rgba(255,140,140,.7); }
 
   .grip { width: 34px; height: 40px; padding: 0; border: 0; border-radius: 12px; background: transparent; color: var(--muted);
-    display: grid; place-items: center; touch-action: none; cursor: grab; }
+    display: grid; place-items: center; touch-action: none; }
   .grip svg { width: 18px; height: 18px; }
   .moves { grid-column: 1 / -1; display: flex; gap: 8px; margin: 4px 6px 0 0; }
   .mv { flex: 1; min-height: 40px; display: flex; align-items: center; justify-content: center; gap: 7px; font-size: 13px; font-weight: 700;
@@ -133,7 +137,7 @@
     box-shadow: 0 24px 54px rgba(0,0,0,.6); }
   body.dragging { user-select: none; -webkit-user-select: none; cursor: grabbing; }
 
-  /* シート（編集・通知設定） */
+  /* シート（編集・設定） */
   .sheet-wrap { position: fixed; left: 0; right: 0; top: var(--vvtop); height: var(--vvh); z-index: 50; display: none;
     align-items: flex-end; justify-content: center; background: rgba(2,4,14,.58); }
   .sheet-wrap.open { display: flex; }
@@ -174,7 +178,11 @@
   .status div { display: flex; justify-content: space-between; gap: 12px; padding: 11px 14px; border-radius: 14px; background: rgba(255,255,255,.07); font-size: 14px; }
   .status b { font-weight: 700; text-align: right; }
   .ok { color: #7dffb0; } .ng { color: #ffb0b0; } .warn { color: #ffd98a; }
-  .sheet-ver { text-align: center; margin: 18px 0 0; font-size: 12px; color: var(--muted); }
+  .sec-title { margin: 26px 2px 0; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.14); font-size: 16px; font-weight: 800; }
+  .sec-title:first-of-type { margin-top: 4px; border-top: 0; padding-top: 0; }
+  .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.55; padding: 12px 14px; border-radius: 14px;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.22); word-break: break-all; -webkit-user-select: all; user-select: all; }
+  .sheet-ver { text-align: center; margin: 22px 0 0; font-size: 12px; color: var(--muted); }
 
   .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 22px); transform: translateX(-50%) translateY(20px); opacity: 0;
     z-index: 80; width: max-content; max-width: min(92vw, 440px); padding: 12px 20px; border-radius: 999px; font-size: 14px; font-weight: 600; text-align: center;
@@ -198,10 +206,16 @@
 <div class="app">
   <header>
     <div class="brand"><h1>やること</h1><span class="ver" id="ver"></span></div>
-    <button id="bell" class="icon-btn glass" type="button" aria-label="通知の設定">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 3.5 1.2 5 2 6H4c.8-1 2-2.5 2-6z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>
-      <span class="badge"></span>
-    </button>
+    <div class="hbtns">
+      <button id="syncBtn" class="icon-btn glass" type="button" data-s="off" aria-label="同期の設定">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 0 1-.6-7.96A5.5 5.5 0 0 1 17 8.5a4.5 4.5 0 0 1 .5 9.5H7z"/></svg>
+        <span class="badge"></span>
+      </button>
+      <button id="bell" class="icon-btn glass" type="button" aria-label="通知の設定">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 3.5 1.2 5 2 6H4c.8-1 2-2.5 2-6z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>
+        <span class="badge"></span>
+      </button>
+    </div>
   </header>
 
   <form id="form" class="glass" autocomplete="off">
@@ -219,10 +233,13 @@
 <script>
 (() => {
   "use strict";
-  const VERSION = "2.0";
-  const KEY1 = "quick_todo_items_v1";   // ver1.x のデータ（消さずに残す）
-  const KEY2 = "quick_todo_v2";
+  const VERSION = "3.0";
+  const KEY1 = "quick_todo_items_v1";   // ver 1.x のデータ（消さずに残す）
+  const KEY2 = "quick_todo_v2";         // ver 2.0 以降の付箋（3.0 で更新時刻などを追加）
   const KEY_API = "qt_api";
+  const KEY_SYNC = "qt_sync";
+  const KEY_PUSHREG = "qt_pushreg";
+  const DAY = 86400000;
   const STAGES = [
     { key: "todo", label: "未着手", empty: "未着手の付箋はありません" },
     { key: "doing", label: "実行中", empty: "実行中の付箋はありません" },
@@ -242,18 +259,24 @@
     memo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v16H5z"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>',
   };
 
-  /* ---------- データ ---------- */
+  /* ---------- データ ----------
+     付箋 = { id, title, stage, notes:{todo,doing,done}, alarm, back, ts(並び順), u(最後に編集した時刻), d(削除した印), sy(サーバーへ送った u) } */
   function normalize(o) {
     const stage = STAGES.some((s) => s.key === o.stage) ? o.stage : "todo";
     const n = o.notes && typeof o.notes === "object" ? o.notes : {};
+    const d = o.d ? 1 : 0;
+    const ts = Number.isFinite(o.ts) ? o.ts : Date.now();
     return {
       id: String(o.id || uid()),
-      title: String(o.title || "").slice(0, 200),
+      title: d ? "" : String(o.title || "").slice(0, 200),
       stage,
-      notes: { todo: String(n.todo || ""), doing: String(n.doing || ""), done: String(n.done || "") },
-      alarm: Number.isFinite(o.alarm) && stage !== "done" ? o.alarm : null,
+      notes: d ? { todo: "", doing: "", done: "" } : { todo: String(n.todo || ""), doing: String(n.doing || ""), done: String(n.done || "") },
+      alarm: !d && Number.isFinite(o.alarm) && stage !== "done" ? o.alarm : null,
       back: o.back === "doing" ? "doing" : "todo",
-      ts: Number.isFinite(o.ts) ? o.ts : Date.now(),
+      ts,
+      u: Number.isFinite(o.u) && o.u > 0 ? o.u : ts,
+      d,
+      sy: Number.isFinite(o.sy) ? o.sy : 0,
     };
   }
 
@@ -265,27 +288,26 @@
         if (d && Array.isArray(d.items)) return { items: d.items.map(normalize), migrated: false };
       }
     } catch (_) {}
-    // ver1.x からの移行：既存のデータはすべて「未着手」に置く
+    // ver 1.x からの移行：既存のデータはすべて「未着手」に置く
     try {
       const old = JSON.parse(localStorage.getItem(KEY1) || "[]");
       if (Array.isArray(old) && old.length) {
         const base = Date.now();
-        return {
-          items: old.map((o, i) => normalize({ id: o.id, title: o.title, stage: "todo", ts: base - i })),
-          migrated: true,
-        };
+        return { items: old.map((o, i) => normalize({ id: o.id, title: o.title, stage: "todo", ts: base - i })), migrated: true };
       }
     } catch (_) {}
     return { items: [], migrated: false };
   }
 
   const loaded = load();
-  let items = loaded.items;
-  function save() {
-    try { localStorage.setItem(KEY2, JSON.stringify({ version: 2, items })); } catch (_) {}
-  }
+  let items = loaded.items.filter((i) => !(i.d && i.sy >= i.u && i.u < Date.now() - 90 * DAY)); // 送信済みで古い削除印は捨てる
+  let maxU = items.reduce((m, i) => Math.max(m, i.u), 0);
+  const nowU = () => (maxU = Math.max(Date.now(), maxU + 1));   // 他の端末の編集より必ず新しい時刻になる
+  function save() { try { localStorage.setItem(KEY2, JSON.stringify({ version: 3, items })); } catch (_) {} }
   if (loaded.migrated) save();
-  const find = (id) => items.find((i) => i.id === id);
+  const find = (id) => items.find((i) => i.id === id && !i.d);
+  const live = () => items.filter((i) => !i.d);
+  function tombstone(it) { it.d = 1; it.title = ""; it.notes = { todo: "", doing: "", done: "" }; it.alarm = null; it.u = nowU(); }
 
   /* ---------- 画面の土台 ---------- */
   const board = $("board"), tabsEl = $("tabs"), input = $("input"), add = $("add");
@@ -316,8 +338,8 @@
           return;
         }
         clearTimeout(armed); armed = null; clear.textContent = "完了を削除";
-        items = items.filter((i) => i.stage !== "done");
-        save(); render(); toast("完了をすべて削除しました");
+        items.filter((i) => !i.d && i.stage === "done").forEach(tombstone);
+        persist(); toast("完了をすべて削除しました");
       });
     }
     const stack = el("div", "stack");
@@ -338,6 +360,14 @@
     const t = new Date(now); t.setDate(t.getDate() + 1);
     if (d.toDateString() === t.toDateString()) return "明日 " + tm;
     return `${d.getMonth() + 1}/${d.getDate()} ${tm}`;
+  }
+  function fmtAgo(ts) {
+    if (!ts) return "まだ";
+    const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
+    if (s < 10) return "たった今";
+    if (s < 60) return s + "秒前";
+    if (s < 3600) return Math.floor(s / 60) + "分前";
+    return fmtAlarm(ts);
   }
 
   /* ---------- 描画 ---------- */
@@ -397,7 +427,7 @@
   function render() {
     for (const s of STAGES) {
       const r = refs[s.key];
-      const list = items.filter((i) => i.stage === s.key).sort((a, b) => b.ts - a.ts);
+      const list = live().filter((i) => i.stage === s.key).sort((a, b) => b.ts - a.ts);
       r.stack.replaceChildren(...list.map(noteEl));
       r.tcount.textContent = r.hcount.textContent = String(list.length);
       r.empty.hidden = list.length > 0;
@@ -405,6 +435,7 @@
       r.head.hidden = !(wide.matches || (r.clear && list.length > 0));
     }
     $("bell").classList.toggle("on", push.active);
+    $("syncBtn").dataset.s = sync.key ? sync.status : "off";
   }
   wide.addEventListener("change", render);
 
@@ -438,6 +469,7 @@
     if (stage === "done") { it.back = it.stage; it.alarm = null; }
     it.stage = stage;
     it.ts = Date.now();
+    it.u = nowU();
     persist();
     if (sheetId === id) refreshSheet();
     if (!quiet) toast(`「${clip(it.title, 14)}」を${LABEL[stage]}へ`);
@@ -447,7 +479,7 @@
     e.preventDefault();
     const t = input.value.trim();
     if (!t) return;
-    items.unshift(normalize({ id: uid(), title: t, stage: "todo", ts: Date.now() }));
+    items.unshift(normalize({ id: uid(), title: t, stage: "todo", ts: Date.now(), u: nowU() }));
     input.value = ""; add.disabled = true;
     persist();
     showStage("todo", true);
@@ -518,9 +550,7 @@
   if (window.visualViewport) { visualViewport.addEventListener("resize", updateVV); visualViewport.addEventListener("scroll", updateVV); }
   updateVV();
 
-  function showSheet(kind) {
-    sheetKind = kind; wrap.classList.add("open");
-  }
+  function showSheet(kind) { sheetKind = kind; wrap.classList.add("open"); }
   function closeSheet() {
     wrap.classList.remove("open"); sheetId = null; sheetKind = null; sheetRefs = null; sheet.replaceChildren();
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -537,7 +567,7 @@
 
     const top = el("div", "sheet-top");
     const title = el("input", "f-input big"); title.type = "text"; title.id = "f-title"; title.maxLength = 120; title.value = it.title; title.setAttribute("aria-label", "タイトル");
-    title.addEventListener("input", () => { if (title.value.trim()) { it.title = title.value; persist(); } });
+    title.addEventListener("input", () => { if (title.value.trim()) { it.title = title.value; it.u = nowU(); persist(); } });
     title.addEventListener("blur", () => { if (!title.value.trim()) title.value = it.title; });
     const close = el("button", "btn primary", "閉じる"); close.type = "button"; close.addEventListener("click", closeSheet);
     top.append(title, close);
@@ -550,7 +580,7 @@
     const segBtns = {};
     STAGES.forEach((s) => {
       const b = el("button"); b.type = "button"; b.style.setProperty("--c", "var(--" + s.key + ")");
-      b.append(el("i", "dot"), document.createTextNode(s.label)); b.querySelector(".dot").style.setProperty("--c", "var(--" + s.key + ")");
+      b.append(el("i", "dot"), document.createTextNode(s.label));
       b.addEventListener("click", () => move(it.id, s.key));
       segBtns[s.key] = b; seg.append(b);
     });
@@ -561,13 +591,13 @@
     alarmBlock.append(el("p", "label", "アラーム"));
     const alarmIn = el("input", "f-input"); alarmIn.type = "datetime-local"; alarmIn.id = "f-alarm"; alarmIn.setAttribute("aria-label", "アラームの日時");
     const setAlarm = (ts) => {
-      it.alarm = ts; alarmIn.value = ts ? toLocalInput(ts) : "";
+      it.alarm = ts; it.u = nowU(); alarmIn.value = ts ? toLocalInput(ts) : "";
       firedClear(it); persist(); refreshSheet();
     };
     const onAlarmInput = () => {
       if (!alarmIn.value) return;
       const ts = new Date(alarmIn.value).getTime();
-      if (Number.isFinite(ts)) { it.alarm = ts; firedClear(it); persist(); refreshSheet(); }
+      if (Number.isFinite(ts)) { it.alarm = ts; it.u = nowU(); firedClear(it); persist(); refreshSheet(); }
     };
     alarmIn.addEventListener("change", onAlarmInput);
     alarmIn.addEventListener("input", onAlarmInput);
@@ -592,7 +622,7 @@
       const mb = el("div", "memo-block"); mb.style.setProperty("--mc", "var(--" + s.key + ")");
       const lb = el("p", "label"); lb.append(el("i", "dot"), document.createTextNode(s.label + "のメモ"));
       const ta = el("textarea", "f-area"); ta.id = "f-memo-" + s.key; ta.value = it.notes[s.key]; ta.maxLength = 2000; ta.placeholder = s.label + "のときに残しておきたいこと";
-      ta.addEventListener("input", () => { it.notes[s.key] = ta.value; persist(); });
+      ta.addEventListener("input", () => { it.notes[s.key] = ta.value; it.u = nowU(); persist(); });
       mb.append(lb, ta); memoBlock.append(mb); memos[s.key] = mb;
     });
     sheet.append(memoBlock);
@@ -604,7 +634,7 @@
     del.addEventListener("click", () => {
       if (!armed) { del.textContent = "もう一度タップで削除"; armed = setTimeout(() => { armed = null; del.textContent = "この付箋を削除"; }, 3000); return; }
       clearTimeout(armed);
-      items = items.filter((i) => i.id !== it.id);
+      tombstone(it);
       persist(); closeSheet(); toast("削除しました");
     });
     delBlock.append(del); sheet.append(delBlock);
@@ -625,10 +655,10 @@
     r.alarmBlock.hidden = !canAlarm; r.alarmDone.hidden = canAlarm;
     if (canAlarm && document.activeElement !== r.alarmIn) r.alarmIn.value = it.alarm ? toLocalInput(it.alarm) : "";
     r.alarmHint.replaceChildren();
-    if (push.active) r.alarmHint.append(document.createTextNode("時間になるとiPhoneに通知が届きます。"));
+    if (push.active) r.alarmHint.append(document.createTextNode("時間になると、同期しているすべての端末に通知が届きます。"));
     else {
       r.alarmHint.append(document.createTextNode("今は、アプリを開いている間だけ通知されます。 "));
-      const b = el("button", "", "通知の設定"); b.type = "button"; b.addEventListener("click", openNotify); r.alarmHint.append(b);
+      const b = el("button", "", "通知の設定"); b.type = "button"; b.addEventListener("click", () => openSettings("notify")); r.alarmHint.append(b);
     }
   }
 
@@ -636,7 +666,8 @@
   const fired = new Set();
   const firedKey = (it) => it.id + ":" + it.alarm;
   function firedClear(it) { for (const k of [...fired]) if (k.startsWith(it.id + ":")) fired.delete(k); }
-  for (const it of items) if (it.alarm && it.stage !== "done" && it.alarm <= Date.now()) fired.add(firedKey(it));
+  function markPastFired() { for (const it of items) if (!it.d && it.alarm && it.stage !== "done" && it.alarm <= Date.now()) fired.add(firedKey(it)); }
+  markPastFired();
 
   async function localNotify(it) {
     if (push.active || !("Notification" in window) || Notification.permission !== "granted") return;
@@ -649,7 +680,7 @@
   function tick() {
     const now = Date.now(); let changed = false;
     for (const it of items) {
-      if (it.stage === "done" || !it.alarm || it.alarm > now) continue;
+      if (it.d || it.stage === "done" || !it.alarm || it.alarm > now) continue;
       const k = firedKey(it);
       if (fired.has(k)) continue;
       fired.add(k); changed = true;
@@ -659,11 +690,148 @@
     if (changed) render();
   }
   setInterval(tick, 15000);
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) { tick(); doSync(); refreshPush(); } });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { tick(); scheduleSync(300); refreshPush(); } });
+  window.addEventListener("focus", () => scheduleSync(300));
 
-  /* ---------- プッシュ通知（サーバー連携） ---------- */
-  const push = { active: false, perm: "default", sub: null };
+  /* ---------- サーバー・同期 ---------- */
   const apiBase = () => (localStorage.getItem(KEY_API) || (window.QT_CONFIG && window.QT_CONFIG.apiBase) || "").trim().replace(/\/+$/, "");
+  const sync = { key: null, cursor: 0, last: 0, status: "off", error: "" };
+  (function () {
+    try { const d = JSON.parse(localStorage.getItem(KEY_SYNC) || "null"); if (d && d.key) { sync.key = d.key; sync.cursor = d.cursor || 0; sync.last = d.last || 0; sync.status = "ok"; } } catch (_) {}
+  })();
+  function saveSync() { try { sync.key ? localStorage.setItem(KEY_SYNC, JSON.stringify({ key: sync.key, cursor: sync.cursor, last: sync.last })) : localStorage.removeItem(KEY_SYNC); } catch (_) {} }
+
+  const B32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+  const KEY_RE = /^[0-9A-HJKMNP-TV-Z]{26}$/;
+  const normKey = (s) => String(s || "").toUpperCase().replace(/[\s-]/g, "").replace(/O/g, "0").replace(/[IL]/g, "1");
+  function genKey() {
+    const b = crypto.getRandomValues(new Uint8Array(17));
+    let acc = 0, nb = 0, out = "";
+    for (const x of b) { acc = (acc << 8) | x; nb += 8; while (nb >= 5) { out += B32[(acc >> (nb - 5)) & 31]; nb -= 5; } acc &= (1 << nb) - 1; }
+    return out.slice(0, 26);
+  }
+  const u8ToB64u = (u8) => btoa(String.fromCharCode(...u8)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const b64uToU8 = (s) => { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return Uint8Array.from(atob(s), (c) => c.charCodeAt(0)); };
+  const makeCode = () => "qt1." + u8ToB64u(new TextEncoder().encode(JSON.stringify({ a: apiBase(), k: sync.key })));
+  function parseCode(s) {
+    s = String(s || "").trim();
+    if (/^qt1\./i.test(s)) {
+      try { const j = JSON.parse(new TextDecoder().decode(b64uToU8(s.slice(4)))); const k = normKey(j.k); if (KEY_RE.test(k)) return { key: k, api: typeof j.a === "string" ? j.a.trim().replace(/\/+$/, "") : "" }; } catch (_) {}
+      return null;
+    }
+    const k = normKey(s);
+    return KEY_RE.test(k) ? { key: k, api: "" } : null;
+  }
+
+  async function call(path, body) {
+    const api = apiBase();
+    if (!api) throw new Error("サーバーのURLを設定してください");
+    let r;
+    try {
+      r = await fetch(api + path, { method: "POST", headers: { "Content-Type": "application/json", ...(sync.key ? { Authorization: "Bearer " + sync.key } : {}) }, body: JSON.stringify(body || {}) });
+    } catch (_) { throw Object.assign(new Error("サーバーに接続できません"), { offline: true }); }
+    if (!r.ok) {
+      let m = ""; try { m = (await r.json()).error; } catch (_) {}
+      throw Object.assign(new Error(m || "サーバーのエラー (" + r.status + ")"), { status: r.status });
+    }
+    return r.json();
+  }
+
+  const pub = (i) => ({ id: i.id, title: i.title, stage: i.stage, notes: i.notes, alarm: i.alarm, back: i.back, ts: i.ts, u: i.u, d: i.d ? 1 : 0 });
+  const isDirty = (i) => i.u > (i.sy || 0);
+
+  /** サーバーから届いた付箋を取り込む。付箋ごとに、あとから編集したほうを採用する。 */
+  function mergeRemote(list) {
+    let changed = false;
+    for (const r of list) {
+      const n = normalize(r);
+      if (n.u > maxU) maxU = n.u;
+      const loc = items.find((i) => i.id === n.id);
+      if (!loc) { n.sy = n.u; items.push(n); changed = true; }
+      else if (n.u > loc.u) { Object.assign(loc, n, { sy: n.u }); changed = true; }
+      else if (n.u === loc.u && loc.sy < loc.u) loc.sy = loc.u;     // 同じ内容がすでにサーバーにある
+    }
+    return changed;
+  }
+
+  let syncBusy = false, syncAgain = false, syncTimer = 0;
+  function scheduleSync(ms) {
+    if (!sync.key) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => runSync(), ms == null ? 1500 : ms);
+  }
+  function setSyncStatus(status, error) {
+    sync.status = status; sync.error = error || "";
+    $("syncBtn").dataset.s = sync.key ? status : "off";
+    if (sheetKind === "settings") updateSyncRows();
+  }
+
+  /** 送るものを送り、新しいものを受け取る。成功したら true。 */
+  async function runSync() {
+    if (!sync.key || !apiBase()) return false;
+    if (syncBusy) { syncAgain = true; return false; }
+    syncBusy = true;
+    let ok = false;
+    try {
+      setSyncStatus("busy");
+      for (let round = 0; round < 30; round++) {
+        const dirty = items.filter(isDirty).slice(0, 40);
+        const sent = new Map(dirty.map((i) => [i.id, i.u]));
+        const res = await call("/api/data/sync", { items: dirty.map(pub), since: sync.cursor });
+        for (const i of items) if (sent.has(i.id) && i.u === sent.get(i.id)) i.sy = i.u;   // 送っている間に編集されていなければ「送信済み」
+        const changed = mergeRemote(res.items || []);
+        sync.cursor = res.cursor || 0;
+        if (changed) { markPastFired(); save(); render(); if (sheetKind === "note") refreshSheet(); }
+        if (!res.more && !items.some(isDirty)) break;
+      }
+      sync.last = Date.now(); saveSync(); save(); render();
+      setSyncStatus("ok"); ok = true;
+    } catch (e) {
+      setSyncStatus("error", e.status === 401 ? "同期コードが正しくありません" : e.message || "同期に失敗しました");
+    } finally {
+      syncBusy = false;
+      if (syncAgain) { syncAgain = false; scheduleSync(500); }
+    }
+    return ok;
+  }
+  setInterval(() => { if (!document.hidden && sync.key) scheduleSync(0); }, 45000);
+  window.addEventListener("online", () => scheduleSync(300));
+
+  async function startSync() {
+    const api = apiBase();
+    if (!api) throw new Error("先にサーバーのURLを保存してください");
+    try { const h = await fetch(api + "/api/health"); if (!h.ok) throw 0; } catch (_) { throw new Error("サーバーに接続できません。URLを確認してください"); }
+    sync.key = genKey(); sync.cursor = 0; sync.last = 0;
+    items.forEach((i) => { i.sy = 0; });
+    saveSync(); save();
+    if (!(await runSync())) { const m = sync.error; sync.key = null; saveSync(); setSyncStatus("off"); throw new Error(m || "同期を始められませんでした"); }
+  }
+
+  async function joinSync(text) {
+    const c = parseCode(text);
+    if (!c) throw new Error("同期コードの形式が正しくありません");
+    if (c.api) { try { localStorage.setItem(KEY_API, c.api); } catch (_) {} }
+    if (!apiBase()) throw new Error("先にサーバーのURLを保存してください");
+    const prev = { key: sync.key, cursor: sync.cursor, last: sync.last };
+    sync.key = c.key; sync.cursor = 0;
+    try {
+      const probe = await call("/api/data/sync", { items: [], since: 0 });   // まず読むだけで、コードが使われているか確かめる
+      if (!probe.exists) throw new Error("このコードの同期データが見つかりません。コードを確認してください");
+    } catch (e) { Object.assign(sync, prev); throw e; }
+    items.forEach((i) => { i.sy = 0; });          // この端末の付箋もサーバーへ送って一緒にする
+    sync.last = 0; saveSync(); save();
+    if (!(await runSync())) { const m = sync.error; Object.assign(sync, prev); saveSync(); setSyncStatus(prev.key ? "ok" : "off"); throw new Error(m || "同期に失敗しました"); }
+  }
+
+  async function stopSync() {
+    if (push.sub) await disablePush();
+    sync.key = null; sync.cursor = 0; sync.last = 0; saveSync();
+    items.forEach((i) => { i.sy = 0; });
+    setSyncStatus("off"); save(); render();
+  }
+
+  /* ---------- プッシュ通知 ---------- */
+  const push = { active: false, perm: "default", sub: null };
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const standalone = () => navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
   const pushSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -672,130 +840,198 @@
     if (!("serviceWorker" in navigator)) return Promise.reject(new Error("no-sw"));
     return Promise.race([navigator.serviceWorker.ready, new Promise((_, rej) => setTimeout(() => rej(new Error("sw-timeout")), 4000))]);
   }
-  const b64uToU8 = (s) => { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; const b = atob(s); return Uint8Array.from(b, (c) => c.charCodeAt(0)); };
   const sameKey = (buf, u8) => { if (!buf) return false; const a = new Uint8Array(buf); return a.length === u8.length && a.every((v, i) => v === u8[i]); };
 
   async function refreshPush() {
     push.perm = "Notification" in window ? Notification.permission : "unsupported";
     push.sub = null;
-    try {
-      if (pushSupported()) { const reg = await getReg(); push.sub = await reg.pushManager.getSubscription(); }
-    } catch (_) {}
-    push.active = !!(push.sub && apiBase() && push.perm === "granted");
+    try { if (pushSupported()) { const reg = await getReg(); push.sub = await reg.pushManager.getSubscription(); } } catch (_) {}
+    push.active = !!(push.sub && apiBase() && sync.key && push.perm === "granted");
     $("bell").classList.toggle("on", push.active);
-    if (sheetKind === "notify") renderNotify();
+    if (sheetKind === "settings") renderSettings(true);
     if (sheetKind === "note") refreshSheet();
+    // 端末の登録情報を、ときどきサーバーへ送り直す（購読先が変わっても通知が届くように）
+    if (push.active) {
+      let last = 0; try { last = Number(localStorage.getItem(KEY_PUSHREG)) || 0; } catch (_) {}
+      if (Date.now() - last > 6 * 3600 * 1000) {
+        call("/api/push/subscribe", { subscription: push.sub.toJSON() }).then(() => { try { localStorage.setItem(KEY_PUSHREG, String(Date.now())); } catch (_) {} }).catch(() => {});
+      }
+    }
   }
-
-  let syncTimer = 0, dirty = false;
-  function scheduleSync() { clearTimeout(syncTimer); syncTimer = setTimeout(doSync, 800); }
-  async function doSync() {
-    const api = apiBase();
-    if (!api || !pushSupported()) return;
-    let sub = push.sub;
-    if (!sub) { try { sub = push.sub = await (await getReg()).pushManager.getSubscription(); } catch (_) { return; } }
-    if (!sub) return;
-    const alarms = items.filter((i) => i.stage !== "done" && i.alarm).slice(0, 100).map((i) => ({
-      id: i.id, title: clip(i.title, 120), stage: i.stage, note: clip(i.notes[i.stage].trim(), 120), at: i.alarm,
-    }));
-    try {
-      const r = await fetch(api + "/api/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subscription: sub.toJSON(), alarms }) });
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      dirty = false;
-    } catch (_) { dirty = true; }
-  }
-  window.addEventListener("online", () => { if (dirty) doSync(); });
 
   async function enablePush() {
     if (!pushSupported()) throw new Error("このブラウザは通知に対応していません");
     if (isIOS && !standalone()) throw new Error("ホーム画面に追加したアプリから開いてください");
+    if (!sync.key) throw new Error("通知を使うには、先に「同期」をオンにしてください");
     const perm = await Notification.requestPermission();
-    if (perm !== "granted") { await refreshPush(); throw new Error("通知が許可されていません。iPhoneの設定アプリで許可してください"); }
-    const api = apiBase();
-    if (!api) { await refreshPush(); return "サーバー未設定です。アプリを開いている間だけ通知します"; }
+    if (perm !== "granted") { await refreshPush(); throw new Error("通知が許可されていません。端末の設定で許可してください"); }
     const reg = await getReg();
-    const res = await fetch(api + "/api/vapid-public-key");
-    if (!res.ok) throw new Error("通知サーバーに接続できません");
-    const { key } = await res.json();
-    const appKey = b64uToU8(key);
+    let res;
+    try { const r = await fetch(apiBase() + "/api/vapid-public-key"); if (!r.ok) throw 0; res = await r.json(); } catch (_) { throw new Error("通知サーバーに接続できません"); }
+    const appKey = b64uToU8(res.key);
     let sub = await reg.pushManager.getSubscription();
     if (sub && !sameKey(sub.options && sub.options.applicationServerKey, appKey)) { await sub.unsubscribe(); sub = null; }
     if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appKey });
     push.sub = sub;
-    await doSync();
+    await call("/api/push/subscribe", { subscription: sub.toJSON() });
+    try { localStorage.setItem(KEY_PUSHREG, String(Date.now())); } catch (_) {}
     await refreshPush();
     return "通知をオンにしました";
   }
   async function disablePush() {
-    const api = apiBase();
     try {
       const sub = push.sub || (await (await getReg()).pushManager.getSubscription());
       if (sub) {
-        if (api) { try { await fetch(api + "/api/unsubscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) }); } catch (_) {} }
+        if (sync.key && apiBase()) { try { await call("/api/push/unsubscribe", { endpoint: sub.endpoint }); } catch (_) {} }
         await sub.unsubscribe();
       }
     } catch (_) {}
     await refreshPush();
   }
   async function testPush() {
-    const api = apiBase();
-    if (!api || !push.sub) throw new Error("先に通知をオンにしてください");
-    const r = await fetch(api + "/api/test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: push.sub.endpoint }) });
-    if (!r.ok) throw new Error("テスト通知を送れませんでした (" + r.status + ")");
+    if (!push.sub) throw new Error("先に通知をオンにしてください");
+    await call("/api/push/test", { endpoint: push.sub.endpoint });
   }
 
-  function openNotify() { sheetId = null; showSheet("notify"); renderNotify(); }
-  function renderNotify() {
+  /* ---------- 設定（サーバー・同期・通知） ---------- */
+  let settingsRefs = null;
+
+  function openSettings(where) { sheetId = null; showSheet("settings"); renderSettings(false); if (where) { const t = sheet.querySelector('[data-sec="' + where + '"]'); if (t) t.scrollIntoView({ block: "start" }); } }
+
+  function statusRow(k, v, cls) { const d = el("div"); d.append(el("span", "", k)); const b = el("b", cls || "", v); d.append(b); return [d, b]; }
+  const rowClass = { ok: "ok", busy: "warn", error: "ng" };
+
+  /** 同期の状態の表示だけを更新する（入力中の欄を消さないため、全体は描き直さない） */
+  function updateSyncRows() {
+    const r = settingsRefs; if (!r || !sync.key || !r.last || !r.count) return;
+    const label = { ok: "オン", busy: "同期中…", error: "うまくいっていません" }[sync.status] || "オン";
+    r.state.textContent = label; r.state.className = rowClass[sync.status] || "ok";
+    r.last.textContent = fmtAgo(sync.last);
+    r.count.textContent = live().length + " 枚";
+    r.err.textContent = sync.error; r.err.hidden = !sync.error;
+  }
+
+  function renderSettings(keepScroll) {
+    const prevTop = keepScroll ? sheet.scrollTop : 0;
+    const prev = { api: $("f-api") && $("f-api").value, code: $("f-code") && $("f-code").value };
     sheet.replaceChildren();
     sheet.style.setProperty("--c", "var(--done)");
     sheet.append(el("div", "grab"));
     const top = el("div", "sheet-top");
-    top.append(el("h3", "", "通知の設定"));
+    top.append(el("h3", "", "設定"));
     const close = el("button", "btn primary", "閉じる"); close.type = "button"; close.addEventListener("click", closeSheet);
     top.append(close); sheet.append(top);
-
     const api = apiBase();
-    const rows = [];
-    if (!pushSupported()) rows.push(["通知", "このブラウザは非対応", "ng"]);
-    else if (isIOS && !standalone()) rows.push(["通知", "ホーム画面のアプリから開いてください", "warn"]);
-    else rows.push(["通知の許可", { granted: "許可済み", denied: "拒否されています", default: "未設定" }[push.perm] || push.perm, push.perm === "granted" ? "ok" : push.perm === "denied" ? "ng" : "warn"]);
-    rows.push(["通知サーバー", api ? "設定済み" : "未設定", api ? "ok" : "warn"]);
-    rows.push(["アプリを閉じているとき", push.active ? "通知が届きます" : "通知されません", push.active ? "ok" : "warn"]);
-    const st = el("div", "status");
-    rows.forEach(([k, v, c]) => { const d = el("div"); d.append(el("span", "", k)); d.append(el("b", c, v)); st.append(d); });
-    sheet.append(st);
+    const R = (settingsRefs = {});
+    const run = (btn, fn, okMsg) => async () => {
+      btn.disabled = true;
+      try { const m = await fn(); if (okMsg || m) toast(okMsg || m); } catch (e) { toast(e.message || "失敗しました", 4500); }
+      btn.disabled = false;
+      if (sheetKind === "settings") renderSettings(true);
+    };
 
-    const blk = el("div", "block");
-    blk.append(el("p", "label", "通知サーバーのURL"));
-    const url = el("input", "f-input"); url.type = "url"; url.id = "f-api"; url.placeholder = "https://quick-todo-push.xxxx.workers.dev"; url.value = api; url.autocapitalize = "off"; url.spellcheck = false;
-    blk.append(url);
+    /* サーバー */
+    const s1 = el("h4", "sec-title", "サーバー"); s1.dataset.sec = "server"; sheet.append(s1);
+    const b1 = el("div", "block"); b1.style.marginTop = "8px";
+    const url = el("input", "f-input"); url.type = "url"; url.id = "f-api"; url.placeholder = "https://quick-todo-push.xxxx.workers.dev"; url.value = prev.api != null ? prev.api : api; url.autocapitalize = "off"; url.spellcheck = false;
+    b1.append(url);
     const rowA = el("div", "row tight");
     const saveUrl = el("button", "btn", "URLを保存"); saveUrl.type = "button";
     saveUrl.addEventListener("click", async () => {
       const v = url.value.trim().replace(/\/+$/, "");
       if (v && !/^https?:\/\//.test(v)) return toast("https:// から始まるURLを入れてください");
       try { v ? localStorage.setItem(KEY_API, v) : localStorage.removeItem(KEY_API); } catch (_) {}
-      await refreshPush(); doSync(); toast("保存しました");
+      await refreshPush(); scheduleSync(0); toast("保存しました");
     });
-    rowA.append(saveUrl); blk.append(rowA);
-    blk.append(el("p", "hint", "サーバーを用意すると、アプリを閉じていてもアラームの時間にiPhoneへ通知が届きます。手順はリポジトリの server/README.md にあります。"));
-    sheet.append(blk);
+    rowA.append(saveUrl); b1.append(rowA);
+    b1.append(el("p", "hint", api ? "同期と通知に、このサーバーを使います。" : "同期と通知には、自分のサーバー（Cloudflare Workers）が必要です。手順はリポジトリの server/README.md にあります。"));
+    sheet.append(b1);
 
-    const act = el("div", "block row");
+    /* 同期 */
+    const s2 = el("h4", "sec-title", "端末間の同期"); s2.dataset.sec = "sync"; sheet.append(s2);
+    const b2 = el("div", "block"); b2.style.marginTop = "8px";
+    const st = el("div", "status");
+    const [r1, v1] = statusRow("同期", sync.key ? "オン" : "オフ", sync.key ? "ok" : "warn"); st.append(r1); R.state = v1;
+    if (sync.key) {
+      const [r2, v2] = statusRow("最後に同期", fmtAgo(sync.last)); st.append(r2); R.last = v2;
+      const [r3, v3] = statusRow("付箋の数", live().length + " 枚"); st.append(r3); R.count = v3;
+    }
+    b2.append(st);
+    R.err = el("p", "hint ng"); R.err.hidden = true; b2.append(R.err);
+
+    if (!sync.key) {
+      b2.append(el("p", "hint", "iPhone・iPad・PCのどこで開いても、同じ付箋が見えるようになります。まず1台目で同期を始め、表示された同期コードを2台目以降に入れます。"));
+      const start = el("button", "btn primary", "この端末から同期を始める"); start.type = "button"; start.style.cssText = "width:100%;margin-top:10px";
+      start.addEventListener("click", run(start, async () => { await startSync(); return "同期を始めました。同期コードを他の端末に入力してください"; }));
+      b2.append(start);
+      const jl = el("p", "label", "別の端末で始めた同期に参加する"); jl.style.marginTop = "22px"; b2.append(jl);
+      const code = el("input", "f-input"); code.type = "text"; code.id = "f-code"; code.placeholder = "同期コードを貼り付け"; code.autocapitalize = "off"; code.spellcheck = false; code.autocomplete = "off";
+      if (prev.code) code.value = prev.code;
+      b2.append(code);
+      const join = el("button", "btn", "参加する"); join.type = "button"; join.style.marginTop = "10px";
+      join.addEventListener("click", run(join, async () => { await joinSync(code.value); return "同期しました（" + live().length + "枚）"; }));
+      b2.append(join);
+      b2.append(el("p", "hint", "この端末にすでにある付箋は、捨てずに一緒に同期されます。"));
+    } else {
+      const cl = el("p", "label", "同期コード"); cl.style.marginTop = "14px"; b2.append(cl);
+      b2.append(Object.assign(el("div", "code", makeCode()), { id: "sync-code" }));
+      const rowC = el("div", "row tight");
+      const copy = el("button", "btn", "コードをコピー"); copy.type = "button";
+      copy.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(makeCode()); toast("コピーしました"); }
+        catch (_) { const rg = document.createRange(); rg.selectNodeContents($("sync-code")); const s = getSelection(); s.removeAllRanges(); s.addRange(rg); toast("コードを選択しました。コピーしてください"); }
+      });
+      const now = el("button", "btn", "今すぐ同期"); now.type = "button";
+      now.addEventListener("click", run(now, async () => { if (!(await runSync()) && sync.error) throw new Error(sync.error); return "同期しました"; }));
+      rowC.append(copy, now); b2.append(rowC);
+      b2.append(el("p", "hint", "このコードを知っている人は、あなたの付箋を見たり書き換えたりできます。他の人には渡さないでください。別の端末の「同期に参加する」欄に貼り付けると、同じ付箋が使えます。"));
+      const rowD = el("div", "row"); rowD.style.marginTop = "14px";
+      const stop = el("button", "btn", "この端末の同期をやめる"); stop.type = "button";
+      stop.addEventListener("click", run(stop, async () => { await stopSync(); return "この端末の同期をやめました。付箋はこの端末に残っています"; }));
+      const wipe = el("button", "btn danger", "サーバーのデータを削除"); wipe.type = "button";
+      let armed = null;
+      wipe.addEventListener("click", async () => {
+        if (!armed) { wipe.textContent = "もう一度タップで削除"; armed = setTimeout(() => { armed = null; wipe.textContent = "サーバーのデータを削除"; }, 3500); return; }
+        clearTimeout(armed); wipe.disabled = true;
+        try { await call("/api/data/delete", {}); await stopSync(); toast("サーバーのデータを削除しました。この端末の付箋は残っています", 4500); }
+        catch (e) { toast(e.message, 4500); }
+        wipe.disabled = false; if (sheetKind === "settings") renderSettings(true);
+      });
+      rowD.append(stop, wipe); b2.append(rowD);
+    }
+    sheet.append(b2);
+
+    /* 通知 */
+    const s3 = el("h4", "sec-title", "通知"); s3.dataset.sec = "notify"; sheet.append(s3);
+    const b3 = el("div", "block"); b3.style.marginTop = "8px";
+    const st3 = el("div", "status");
+    if (!pushSupported()) st3.append(statusRow("通知", "このブラウザは非対応", "ng")[0]);
+    else if (isIOS && !standalone()) st3.append(statusRow("通知", "ホーム画面のアプリから開いてください", "warn")[0]);
+    else st3.append(statusRow("通知の許可", { granted: "許可済み", denied: "拒否されています", default: "未設定" }[push.perm] || push.perm, push.perm === "granted" ? "ok" : push.perm === "denied" ? "ng" : "warn")[0]);
+    st3.append(statusRow("同期", sync.key && api ? "オン" : "オフ", sync.key && api ? "ok" : "warn")[0]);
+    st3.append(statusRow("アプリを閉じているとき", push.active ? "通知が届きます" : "通知されません", push.active ? "ok" : "warn")[0]);
+    b3.append(st3);
+    const act = el("div", "row"); act.style.marginTop = "12px";
     const on = el("button", "btn primary", push.active ? "通知を再設定" : "通知をオンにする"); on.type = "button";
-    on.addEventListener("click", async () => { on.disabled = true; try { toast(await enablePush()); } catch (e) { toast(e.message || "失敗しました", 4000); } on.disabled = false; });
+    on.addEventListener("click", run(on, enablePush));
     act.append(on);
     if (push.active) {
       const t = el("button", "btn", "テスト通知"); t.type = "button";
-      t.addEventListener("click", async () => { try { await testPush(); toast("テスト通知を送りました"); } catch (e) { toast(e.message, 4000); } });
+      t.addEventListener("click", run(t, async () => { await testPush(); return "テスト通知を送りました"; }));
       const off = el("button", "btn danger", "オフにする"); off.type = "button";
-      off.addEventListener("click", async () => { await disablePush(); toast("通知をオフにしました"); });
+      off.addEventListener("click", run(off, async () => { await disablePush(); return "通知をオフにしました"; }));
       act.append(t, off);
     }
-    sheet.append(act);
+    b3.append(act);
+    b3.append(el("p", "hint", sync.key ? "アラームの時間になると、同期しているすべての端末に通知が届きます。" : "通知を使うには、先に上の「同期」をオンにしてください。"));
+    sheet.append(b3);
+
     sheet.append(el("p", "sheet-ver", "やること ver " + VERSION));
+    updateSyncRows();
+    if (keepScroll) sheet.scrollTop = prevTop;
   }
-  $("bell").addEventListener("click", openNotify);
+  $("bell").addEventListener("click", () => openSettings("notify"));
+  $("syncBtn").addEventListener("click", () => openSettings("sync"));
 
   /* ---------- 起動 ---------- */
   if ("serviceWorker" in navigator) {
@@ -804,7 +1040,8 @@
   }
   render();
   setActive(0);
-  refreshPush().then(() => doSync());
+  refreshPush();
+  if (sync.key) scheduleSync(200);
   if (location.hash.startsWith("#note=")) openNote(decodeURIComponent(location.hash.slice(6)));
   if (loaded.migrated) toast("ver " + VERSION + ": 以前のデータを未着手に移しました", 4500);
 })();

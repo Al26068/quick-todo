@@ -1,5 +1,5 @@
-// やること ver 2.0 — オフライン対応と Web Push 通知
-const VERSION = "2.0";
+// やること ver 3.0 — オフライン対応と Web Push 通知
+const VERSION = "3.0";
 const CACHE = "quick-todo-v" + VERSION;
 const ASSETS = [
   "./",

@@ -1,12 +1,13 @@
 {
   "name": "quick-todo-push",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
-  "description": "やること ver 2.0 の通知サーバー（Cloudflare Workers + D1）",
+  "description": "やること ver 3.0 の同期・通知サーバー（Cloudflare Workers + D1）",
   "scripts": {
     "dev": "wrangler dev --test-scheduled",
     "deploy": "wrangler deploy",
+    "setup": "node scripts/setup.mjs",
     "keys": "node scripts/gen-vapid.mjs",
     "test": "node test/run.mjs"
   },
